@@ -99,3 +99,42 @@ This is the standard workflow for creating and managing resources that are defin
 
 ```bash
 # Write The config/code -> Terraform Apply -> State file updated by terraform -> Cloud resource will be managed via terraform -> Update / Make Changes to the config
+
+
+## Importing Manually Created Resources
+
+This workflow is used when you need to bring existing, manually created AWS resources under Terraform's management.
+
+```bash
+# Write The config/code -> Terraform import -> State file updated by terraform -> Cloud resource will be managed via terraform -> Update / Make Changes
+````
+
+### Example Import Commands:
+
+To apply changes only to a specific module:
+
+```bash
+terraform apply -target="module.s3_import"
+```
+
+To import an S3 bucket into the Terraform state:
+
+```bash
+terraform import module.s3_import.aws_s3_bucket.tfstate arn:aws:s3:::s3bucketbennttnoida
+```
+
+---
+
+## Usage
+
+To plan the infrastructure changes and pass a variable at runtime, you can use the following command. This is useful for sensitive data or values that change frequently.
+
+```bash
+terraform plan -var="windows_password=PasswordBennnett@123"
+```
+
+```
+
+You can now copy-paste this into your `README.md` and it will render exactly like the image you uploaded. Let me know if you'd like to include syntax highlighting or collapsible sections too.
+```
+
