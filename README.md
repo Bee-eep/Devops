@@ -1,170 +1,97 @@
-Terraform AWS Infrastructure Project
-This repository contains Terraform configurations to build, manage, and scale AWS infrastructure. The project is structured to support multiple environments and reusable components through modules, demonstrating a production-grade approach to Infrastructure as Code (IaC).
+Terraform AWS Infrastructure Deployment
+This repository contains Terraform configurations to provision and manage AWS infrastructure. The project is divided into phases, starting from a basic EC2 instance creation and evolving into a modular, multi-environment setup.
 
 Table of Contents
-Project Overview
+Phase 1: Basic EC2 Instance Creation
+Phase 2: Modularization
+Phase 3: Multi-Environment Deployment
+Terraform Workflow
+Usage
+Phase 1: Basic EC2 Instance Creation (April 1, 2025)
+This initial phase focuses on setting up the necessary tools and creating a single EC2 instance with specific configurations.
 
 Prerequisites
+Install Terraform: Download and install Terraform from the official website.
+Install AWS CLI: Download and install the AWS Command Line Interface.
+Configure AWS CLI: Configure the AWS CLI with your Access Key and Secret Key by running aws configure.
+Configuration Steps
+Provider Configuration (provider.tf): This file configures the AWS provider, specifying the region where the resources will be created.
 
-Configuration
+Main Configuration (main.tf): This file contains the resource block for the EC2 instance. The configuration was adapted from the official Terraform AWS documentation to meet the following requirements:
 
-AWS Credentials
+AMI ID: A specific Ubuntu AMI ID is used.
+Instance Type: The instance type is set to t3.micro.
+Subnet ID: The Subnet ID is manually provided.
+Public IP: The public IP address is disabled.
+EBS Volume: The root EBS volume size is increased from the default 8 GB to 12 GB.
+Variable Declaration (variables.tf): To make the configuration reusable, all hardcoded values from main.tf were declared as variables in this file.
 
-Directory Structure
+Variable Definitions (terraform.tfvars): The values for the variables declared in variables.tf are defined in this file. This allows for easy modification of instance details without altering the core configuration files.
 
-Usage and Workflows
+Phase 2: Modularization (April 4, 2025)
+The focus of this phase was to refactor the configuration into a modular structure for better organization, reusability, and scalability.
 
-Initializing the Backend
+Module Structure
+The infrastructure is broken down into reusable modules for:
 
-Deploying Infrastructure
+VPC: Manages the Virtual Private Cloud.
+Subnet: Manages the subnets within the VPC.
+EC2: Manages the EC2 instance.
+Child Module Implementation
+Variable Declaration: Each module has its own variables.tf to define the input values it requires.
+Resource Blocks: The resource blocks within each module are defined with the maximum number of configurable arguments to ensure flexibility.
+Output Declarations (outputs.tf): Each module declares necessary attributes as outputs (e.g., VPC ID, Subnet ID). This allows other modules to use these values.
+Root Module Implementation
+main.tf: The root main.tf file now calls the created modules (VPC, Subnet, and EC2) to provision the infrastructure. It is responsible for passing the necessary variable values to the child modules. The EC2 instance is specifically configured to be launched within the subnet created by the subnet module.
+variables.tf: The root module's variables.tf defines the variables that will be passed down to the child modules.
+terraform.tfvars: This file in the root directory provides the actual values for the variables, which are then propagated to the respective modules.
+Phase 3: Multi-Environment Deployment (April 10, 2025)
+This phase expands the project to support three distinct environments (e.g., local, dev, prod) with backend configurations and a more comprehensive set of resources.
 
-Passing Variables
+Environment Configuration
+Each environment has its own backend configuration to store the Terraform state file separately. This is crucial for preventing state conflicts between environments.
 
-Destroying Infrastructure
+Managed Resources
+The Terraform configuration manages the following AWS resources for each environment:
 
-Advanced Workflows
+VPC: A dedicated Virtual Private Cloud.
+Subnet: Subnets within the VPC.
+EIP: Elastic IP addresses for stable public IPs.
+S3: S3 buckets for object storage.
+EC2: Compute instances.
+Security Groups: Firewall rules to control inbound and outbound traffic.
+Internet Gateway (IGW): To provide internet access to the VPC.
+NAT Gateway: To allow instances in private subnets to access the internet.
+The configuration leverages Terraform functions for dynamic values and outputs to expose important resource attributes.
 
-Targeting Specific Resources
+Terraform Workflow
+Creating New Resources
+This is the standard workflow for creating and managing resources that are defined in the Terraform configuration files.
 
-Importing Existing Resources
+Bash
 
-Architectural Concepts
+# Write The config/code -> Terraform Apply -> State file updated by terraform -> Cloud resource will be managed via terraform -> Update / Make Changes to the config
+Importing Manually Created Resources
+This workflow is used when you need to bring existing, manually created AWS resources under Terraform's management.
 
-Modularization
+Bash
 
-Environments
+# Write The config/code -> Terraform import -> State file updated by terraform -> Cloud resource will be managed via terraform -> Update / Make Changes to the config
+Example Import Commands:
 
-State Management
+To apply changes only to a specific module:
 
-Outputs
-
-Project Overview
-This project automates the provisioning of core AWS services. It is designed to be version-controlled and deployed through a CI/CD pipeline. The configurations evolve from a single EC2 instance to a multi-environment, modular architecture.
-
-The managed resources include:
-
-VPC, Subnets (Public and Private)
-
-Internet Gateway (IGW)
-
-NAT Gateway
-
-Elastic IP (EIP)
-
-Security Groups
-
-EC2 Instances
-
-S3 Buckets
-
-IAM Roles and Policies (Implicit)
-
-Prerequisites
-Before you begin, ensure you have the following tools installed on your local machine:
-
-Terraform: Download and Install Terraform
-
-AWS CLI: Install and Configure the AWS CLI
-
-Configuration
-AWS Credentials
-The Terraform AWS provider requires credentials to manage your resources. Configure your AWS CLI with an Access Key and Secret Key by running:
-
-aws configure
-
-Terraform will automatically use these credentials. It is best practice to use an IAM role with the minimum required permissions.
-
-Directory Structure
-The project is organized into modules for reusable components and environments for isolated deployments (e.g., dev, staging, production).
-
-.
-├── environments/
-│   ├── dev/
-│   │   ├── backend.tf      # S3 backend configuration for dev state
-│   │   ├── main.tf         # Root module instantiation for dev
-│   │   ├── outputs.tf      # Root outputs for dev
-│   │   ├── terraform.tfvars  # Variable values for dev
-│   │   └── variables.tf    # Variable declarations for dev
-│   ├── staging/
-│   │   └── ...             # Staging environment configuration
-│   └── prod/
-│       └── ...             # Production environment configuration
-│
-├── modules/
-│   ├── vpc/
-│   │   ├── main.tf
-│   │   ├── outputs.tf
-│   │   └── variables.tf
-│   ├── ec2/
-│   │   └── ...
-│   ├── s3/
-│   │   └── ...
-│   └── security_group/
-│       └── ...
-│
-└── README.md
-
-Usage and Workflows
-All Terraform commands should be run from within a specific environment's directory (e.g., environments/dev/).
-
-Initializing the Backend
-The first command you must run is terraform init. This will download the necessary provider plugins and configure the remote backend as defined in backend.tf.
-
-cd environments/dev/
-terraform init
-
-Deploying Infrastructure
-Plan: Review the changes Terraform will make to your infrastructure. This is a dry run and is highly recommended.
-
-terraform plan -var-file="terraform.tfvars"
-
-Apply: Provision the resources as defined in the configuration files.
-
-terraform apply -var-file="terraform.tfvars"
-
-Passing Variables
-While terraform.tfvars is the primary method for setting values, you can also pass variables directly on the command line. This is useful for sensitive data or for use in automated scripts.
-
-terraform plan -var="windows_password=SomeSecurePassword@123"
-
-Destroying Infrastructure
-To tear down all resources managed by the configuration in the current environment, use the destroy command.
-
-terraform destroy
-
-Advanced Workflows
-Targeting Specific Resources
-In some cases, you may need to apply changes to a single resource without affecting the rest of the stack. Use the -target flag with caution, as it can cause state drift.
-
-Example: Apply changes only to the S3 module.
+Bash
 
 terraform apply -target="module.s3_import"
+To import an S3 bucket into the Terraform state:
 
-Importing Existing Resources
-If a resource was created manually in the AWS Console, you can bring it under Terraform's management using the import command.
+Bash
 
-Write the Configuration: First, write the resource block in your .tf files for the resource you want to import.
-
-Run Import: Use the terraform import command, providing the resource address and the cloud identifier.
-
-Example: Import an existing S3 bucket.
-
-# The resource block 'aws_s3_bucket.tfstate' must exist within the 's3_import' module
 terraform import module.s3_import.aws_s3_bucket.tfstate arn:aws:s3:::s3bucketbennttnoida
+Usage
+To plan the infrastructure changes and pass a variable at runtime, you can use the following command. This is useful for sensitive data or values that change frequently.
 
-Architectural Concepts
-Modularization
-This project heavily utilizes Terraform Modules to create logical abstractions and promote code reuse. Each core component (VPC, EC2, S3) is defined in its own module with a clear interface using input variables and outputs. The root module in each environment then composes these modules to build the final infrastructure.
+Bash
 
-Environments
-To ensure separation and prevent conflicts, each deployment environment (dev, staging, prod) has its own directory. This allows for:
-
-Separate State Files: Each environment maintains its own state, preventing changes in dev from accidentally impacting prod.
-
-Configuration Differences: Each environment has its own terraform.tfvars file to specify different instance sizes, network ranges, or feature flags.
-
-State Management
-Terraform state is stored remotely in an AWS S3 bucket with state locking enabled via DynamoDB. This is configured in the backend.tf file and is critical for team collaboration, preventing concurrent state file corruption.
-
-Outputs
-Module outputs are used to expose key information about created resources (e.g., a VPC's ID, an EC2 instance's public IP). The root module consumes these outputs to pass data between modules and also declares its own outputs to display important values to the user after an apply is complete.
+terraform plan -var="windows_password=PasswordBennnett@123"
